@@ -154,6 +154,10 @@ public class OthelloBoard : MonoBehaviour
     bool CheckAndReverse(OthelloCell cell, bool doReverse)
     {
         bool isReverse = false;
+        if (cell.OwnerID != -1)
+        {
+            return false;
+        }
 
         for (int i = -1; i <= 1; i++)
         {
