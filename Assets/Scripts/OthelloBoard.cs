@@ -3,36 +3,44 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-public class OthelloBoard : MonoBehaviour {
-    public int CurrentTurn = 0;
+
+public class OthelloBoard : MonoBehaviour
+{
+    [NonSerialized] public int CurrentTurn = 1;
     public GameObject ScoreBoard;
-    public Text ScoreBoardText;
     public GameObject Template;
     public int BoardSize = 8;
-    public List<Color> PlayerChipColors;    
-    public List<Vector2> DirectionList;
+    public List<Color> PlayerChipColors;
     static OthelloBoard instance;
-    public static OthelloBoard Instance { get { return instance; } }
+
+    public static OthelloBoard Instance
+    {
+        get { return instance; }
+    }
+
     OthelloCell[,] OthelloCells;
-    public int EnemyID { get { return (CurrentTurn+1) % 2; } }
+
+
     void Start()
     {
         instance = this;
         OthelloBoardIsSquareSize();
-       
+
         OthelloCells = new OthelloCell[BoardSize, BoardSize];
         float cellAnchorSize = 1.0f / BoardSize;
         for (int y = 0; y < BoardSize; y++)
         {
             for (int x = 0; x < BoardSize; x++)
             {
-                CreateNewCell(x,y, cellAnchorSize);
+                CreateNewCell(x, y, cellAnchorSize);
             }
         }
-        ScoreBoard.GetComponent<RectTransform>().SetSiblingIndex(BoardSize*BoardSize+1);
+
+        ScoreBoard.GetComponent<RectTransform>().SetSiblingIndex(BoardSize * BoardSize + 1);
         GameObject.Destroy(Template);
         InitializeGame();
     }
+
     private void CreateNewCell(int x, int y, float cellAnchorSize)
     {
         GameObject go = GameObject.Instantiate(Template, this.transform);
@@ -44,6 +52,7 @@ public class OthelloBoard : MonoBehaviour {
         oc.Location.x = x;
         oc.Location.y = y;
     }
+
     private void OthelloBoardIsSquareSize()
     {
         RectTransform rect = this.GetComponent<RectTransform>();
@@ -54,6 +63,7 @@ public class OthelloBoard : MonoBehaviour {
         else
             rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Screen.width);
     }
+
     public void InitializeGame()
     {
         ScoreBoard.gameObject.SetActive(false);
@@ -64,116 +74,126 @@ public class OthelloBoard : MonoBehaviour {
                 OthelloCells[x, y].OwnerID = -1;
             }
         }
-        OthelloCells[3, 3].OwnerID = 0;
-        OthelloCells[4, 4].OwnerID = 0;
-        OthelloCells[4, 3].OwnerID = 1;
-        OthelloCells[3, 4].OwnerID = 1;
-    }
-    internal bool CanPlaceHere(Vector2 location)
-    {
-        if (OthelloCells[(int)location.x, (int)location.y].OwnerID != -1)
-            return false;
 
-        for (int direction = 0; direction < DirectionList.Count; direction++)
-        {
-            Vector2 directionVector = DirectionList[direction];
-            if (FindAllyChipOnOtherSide(directionVector, location, false) != null)
-            {
-                return true;
-            }
-        }
-        return false;
+        OthelloCells[3, 3].OwnerID = 1;
+        OthelloCells[4, 4].OwnerID = 1;
+        OthelloCells[4, 3].OwnerID = 0;
+        OthelloCells[3, 4].OwnerID = 0;
+        CheckCellEnable();
     }
-    internal void PlaceHere(OthelloCell othelloCell)
+
+
+// ひっくり返せたら trueを返す ひっくり返せなかったらfalseを返す
+    bool CheckAndReverse(OthelloCell cell, int dx, int dy, bool doReverse)
     {
-        for (int direction = 0; direction < DirectionList.Count; direction++)
+        // 一つ右横がOwnerIDが違うかどうか x,yは確認したいセル
+        // 添字はint 型しか使えないので キャスト というもので変換している。
+        int x = (int) cell.Location.x;
+        int y = (int) cell.Location.y;
+
+        // 相手の駒を見たかどうかの変数
+        bool isChecked = false;
+
+        while (true)
         {
-            Vector2 directionVector = DirectionList[direction];
-            OthelloCell onOtherSide = FindAllyChipOnOtherSide(directionVector, othelloCell.Location, false);
-            if (onOtherSide != null)
+            // 1つとなりにする。
+            x += dx;
+            y += dy;
+            if (x >= 0 && x < BoardSize && y >= 0 && y < BoardSize)
             {
-                ChangeOwnerBetween(othelloCell, onOtherSide, directionVector);
-            }
-        }
-        OthelloCells[(int)othelloCell.Location.x, (int)othelloCell.Location.y].OwnerID = CurrentTurn;
-    }
-    private OthelloCell FindAllyChipOnOtherSide(Vector2 directionVector, Vector2 from, bool EnemyFound)
-    {
-        Vector2 to = from + directionVector;
-        if (IsInRangeOfBoard(to) && OthelloCells[(int)to.x, (int)to.y].OwnerID != -1)
-        {
-            if (OthelloCells[(int)to.x, (int)to.y].OwnerID == OthelloBoard.Instance.CurrentTurn)
-            {
-                if (EnemyFound)
-                    return OthelloCells[(int)to.x, (int)to.y];
-                return null;
+                // 何もしない
             }
             else
-                return FindAllyChipOnOtherSide(directionVector, to, true);
-        }
-        return null;
-    }
-    private bool IsInRangeOfBoard(Vector2 point)
-    {
-        return point.x >= 0 && point.x < BoardSize && point.y >= 0 && point.y < BoardSize;
-    }
-    private void ChangeOwnerBetween(OthelloCell from, OthelloCell to, Vector2 directionVector)
-    {
-        for (Vector2 location = from.Location + directionVector; location != to.Location; location += directionVector)
-        {
-            OthelloCells[(int)location.x, (int)location.y].OwnerID = CurrentTurn;
-        }
-    }
-    internal void EndTurn(bool isAlreadyEnded)
-    {        
-        CurrentTurn = EnemyID;
-        for (int y = 0; y < BoardSize; y++)
-        {
-            for (int x = 0; x < BoardSize; x++)
             {
-                if (CanPlaceHere(new Vector2(x, y)))
+                // ゲームの範囲外だったら終了
+                return false;
+            }
+
+            if (OthelloCells[x, y].OwnerID == -1)
+            {
+                // 何も置かれていないので終了
+                return false;
+            }
+            else if (OthelloCells[x, y].OwnerID != CurrentTurn)
+            {
+                // 相手の駒が置いてある時 「相手の駒を見た」というフラグをたてる
+                isChecked = true;
+            }
+            else if (OthelloCells[x, y].OwnerID == CurrentTurn)
+            {
+                // 自分の色の場合
+                // すでに相手を見ていた場合
+                if (isChecked)
                 {
-                    return;
+                    if (doReverse)
+                    {
+                        // 囲めるので置いたマスから一つ左のマスを自分の色にする
+                        int sx = (int) cell.Location.x;
+                        int sy = (int) cell.Location.y;
+                        while (sx != x || sy != y)
+                        {
+                            // [x,y]じゃないのに注意
+                            OthelloCells[sx, sy].OwnerID = CurrentTurn;
+                            sx += dx;
+                            sy += dy;
+                        }
+                    }
+
+                    // ひっくり返せるときはtrueにして関数を抜ける
+                    return true;
+                }
+                else
+                {
+                    // フラグが立っていなかったら、囲めないので処理終了
+                    return false;
                 }
             }
         }
-        if (isAlreadyEnded)
-            GameOver();
-        else {
-            EndTurn(true);
-        }            
     }
-    public void GameOver()
+
+    bool CheckAndReverse(OthelloCell cell, bool doReverse)
     {
-        for (int y = 0; y < BoardSize; y++)
+        bool isReverse = false;
+
+        for (int i = -1; i <= 1; i++)
         {
-            for (int x = 0; x < BoardSize; x++)
+            for (int j = -1; j <= 1; j++)
             {
-                OthelloCells[x, y].GetComponent<Button>().interactable = false;
-            }
-        }
-        int white = CountScoreFor(0);
-        int black = CountScoreFor(1);
-        if (white > black)
-            ScoreBoardText.text = "White wins " + white + ":" + black;
-        else if (black > white)
-            ScoreBoardText.text = "Black wins " + black + ":" + white;
-        else
-            ScoreBoardText.text = "Draw! " + white + ":" + black;
-        ScoreBoard.gameObject.SetActive(true);
-    }
-    private int CountScoreFor(int owner)
-    {
-        int count = 0;
-        for (int y = 0; y < BoardSize; y++)
-        {
-            for (int x = 0; x < BoardSize; x++)
-            {
-                if (OthelloCells[x, y].OwnerID == owner) {
-                    count++;
+                if (i == 0 && j == 0)
+                {
+                    continue;
                 }
+
+                isReverse |= CheckAndReverse(cell, i, j, doReverse);
             }
         }
-        return count;
+
+        return isReverse;
+    }
+
+    public void PutCell(OthelloCell cell)
+    {
+        // どれかが反転されたかどうか オーバーロード
+        bool isReverse = CheckAndReverse(cell, true);
+
+        if (isReverse)
+        {
+            CurrentTurn = (CurrentTurn + 1) % 2;
+            CheckCellEnable();
+        }
+    }
+
+    // 各セルの有効・無効を判定して切り替える処理
+    void CheckCellEnable()
+    {
+        for (int i = 0; i < BoardSize; i++)
+        {
+            for (int j = 0; j < BoardSize; j++)
+            {
+                bool result = CheckAndReverse(OthelloCells[i, j], false);
+
+                OthelloCells[i, j].GetComponent<Button>().interactable = result;
+            }
+        }
     }
 }
