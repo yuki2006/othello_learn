@@ -22,7 +22,7 @@ public class OthelloBoard : MonoBehaviour
     }
 
     OthelloCell[,] OthelloCells;
-
+    OthelloCell nextCell;
 
     void Start()
     {
@@ -39,21 +39,33 @@ public class OthelloBoard : MonoBehaviour
             }
         }
 
+        // Nextを出す
+        CreateNewCell(10, 6, cellAnchorSize, false);
+
         ScoreBoard.GetComponent<RectTransform>().SetSiblingIndex(BoardSize * BoardSize + 1);
+
         GameObject.Destroy(Template);
         InitializeGame();
     }
 
-    private void CreateNewCell(int x, int y, float cellAnchorSize)
+    private void CreateNewCell(int x, int y, float cellAnchorSize, bool gameCell = true)
     {
         GameObject go = GameObject.Instantiate(Template, this.transform);
         RectTransform r = go.GetComponent<RectTransform>();
         r.anchorMin = new Vector2(x * cellAnchorSize, y * cellAnchorSize);
         r.anchorMax = new Vector2((x + 1) * cellAnchorSize, (y + 1) * cellAnchorSize);
+
         OthelloCell oc = go.GetComponent<OthelloCell>();
-        OthelloCells[x, y] = oc;
-        oc.Location.x = x;
-        oc.Location.y = y;
+        if (gameCell)
+        {
+            OthelloCells[x, y] = oc;
+            oc.Location.x = x;
+            oc.Location.y = y;
+        }
+        else
+        {
+            nextCell = oc;
+        }
     }
 
     private void OthelloBoardIsSquareSize()
@@ -199,6 +211,9 @@ public class OthelloBoard : MonoBehaviour
     // 各セルの有効・無効を判定して切り替える処理
     void CheckCellEnable()
     {
+        // 次おく色を表示する
+        nextCell.OwnerID = CurrentTurn;
+
         // おけるかどうかのフラグ
         bool canPut = false;
         // ガイドを計算して表示する
