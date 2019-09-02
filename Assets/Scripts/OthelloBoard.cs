@@ -13,6 +13,8 @@ public class OthelloBoard : MonoBehaviour
     public List<Color> PlayerChipColors;
     static OthelloBoard instance;
 
+    // 前回パスしているかどうか
+    private bool prevPass = false;
     public static OthelloBoard Instance
     {
         get { return instance; }
@@ -156,6 +158,7 @@ public class OthelloBoard : MonoBehaviour
         bool isReverse = false;
         if (cell.OwnerID != -1)
         {
+            // すでに置かれていたところは置けない
             return false;
         }
 
@@ -182,22 +185,40 @@ public class OthelloBoard : MonoBehaviour
 
         if (isReverse)
         {
-            CurrentTurn = (CurrentTurn + 1) % 2;
-            CheckCellEnable();
+            TurnEnd();
         }
+    }
+
+    void TurnEnd()
+    {
+        CurrentTurn = (CurrentTurn + 1) % 2;
+        CheckCellEnable();
     }
 
     // 各セルの有効・無効を判定して切り替える処理
     void CheckCellEnable()
     {
+        int count = 0;
+        // ガイドを計算して表示する
         for (int i = 0; i < BoardSize; i++)
         {
             for (int j = 0; j < BoardSize; j++)
             {
                 bool result = CheckAndReverse(OthelloCells[i, j], false);
-
+                // resultがtrueならそこにおける、 falseなら置けない。
                 OthelloCells[i, j].GetComponent<Button>().interactable = result;
+                if (result)
+                {
+                    count++;
+                }
             }
+        }
+        // 1回もresult が trueにならなかったらパス
+        if (count == 0)
+        {
+            // パス
+            TurnEnd();
+
         }
     }
 }
