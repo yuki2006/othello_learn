@@ -29,7 +29,5 @@ public class OthelloCell : MonoBehaviour
     public void CellPressed()
     {
         OthelloBoard.Instance.PutCell(this);
-
-        Debug.Log(Location);
     }
 }

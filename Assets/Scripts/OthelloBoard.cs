@@ -199,6 +199,7 @@ public class OthelloBoard : MonoBehaviour
     // 各セルの有効・無効を判定して切り替える処理
     void CheckCellEnable()
     {
+        // おけるかどうかのフラグ
         bool canPut = false;
         // ガイドを計算して表示する
         for (int i = 0; i < BoardSize; i++)
@@ -220,9 +221,28 @@ public class OthelloBoard : MonoBehaviour
         {
             if (prevPass)
             {
-                // 連続してパスがされる
+                // 連続してパスがされるので終了
                 // 本来ならここでゲーム終了みたいな表示とかを出したい
                 Debug.Log("ゲーム終了");
+                int white = 0;
+                int black = 0;
+                for (int i = 0; i < BoardSize; i++)
+                {
+                    for (int j = 0; j < BoardSize; j++)
+                    {
+                        if (OthelloCells[i, j].OwnerID == 0)
+                        {
+                            white++;
+                        }
+                        else if (OthelloCells[i, j].OwnerID == 1)
+                        {
+                            black++;
+                        }
+                    }
+                }
+
+                Debug.Log("黒:" + black + " 白:" + white);
+
                 return;
             }
 
