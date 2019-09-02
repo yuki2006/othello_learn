@@ -15,6 +15,7 @@ public class OthelloBoard : MonoBehaviour
 
     // 前回パスしているかどうか
     private bool prevPass = false;
+
     public static OthelloBoard Instance
     {
         get { return instance; }
@@ -198,7 +199,7 @@ public class OthelloBoard : MonoBehaviour
     // 各セルの有効・無効を判定して切り替える処理
     void CheckCellEnable()
     {
-        int count = 0;
+        bool canPut = false;
         // ガイドを計算して表示する
         for (int i = 0; i < BoardSize; i++)
         {
@@ -209,16 +210,30 @@ public class OthelloBoard : MonoBehaviour
                 OthelloCells[i, j].GetComponent<Button>().interactable = result;
                 if (result)
                 {
-                    count++;
+                    canPut = true;
                 }
             }
         }
-        // 1回もresult が trueにならなかったらパス
-        if (count == 0)
-        {
-            // パス
-            TurnEnd();
 
+        // 1回もresult が trueにならなかったらパス
+        if (!canPut)
+        {
+            if (prevPass)
+            {
+                // 連続してパスがされる
+                // 本来ならここでゲーム終了みたいな表示とかを出したい
+                Debug.Log("ゲーム終了");
+                return;
+            }
+
+            // パス prevPassはTurnEndの前で処理する
+            prevPass = true;
+            TurnEnd();
+        }
+        else
+        {
+            // ガイドがあるのでパスではない。
+            prevPass = false;
         }
     }
 }
