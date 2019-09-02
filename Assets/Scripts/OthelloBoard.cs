@@ -193,12 +193,22 @@ public class OthelloBoard : MonoBehaviour
 
     public void PutCell(OthelloCell cell)
     {
-        // どれかが反転されたかどうか オーバーロード
+        // どれかが反転されたかどうか オーバーロード（多重定義で実現している）
         bool isReverse = CheckAndReverse(cell, true);
 
         if (isReverse)
         {
             TurnEnd();
+            string[] cs = new string[]
+            {
+                "A", "B", "C", "D", "E", "F", "G", "H"
+            };
+            int x = (int) cell.Location.x;
+            int y = (int) cell.Location.y;
+
+            string xPos = cs[x];
+            string yPos = (8 - y).ToString();
+            Debug.Log(xPos + yPos);
         }
     }
 
