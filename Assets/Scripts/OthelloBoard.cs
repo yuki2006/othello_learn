@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -23,6 +24,9 @@ public class OthelloBoard : MonoBehaviour
 
     OthelloCell[,] OthelloCells;
     OthelloCell nextCell;
+
+    // 棋譜を保存する変数を用意する。
+    List<string> history = new List<string>();
 
     void Start()
     {
@@ -198,13 +202,14 @@ public class OthelloBoard : MonoBehaviour
 
         if (isReverse)
         {
-            TurnEnd();
             int x = (int) cell.Location.x;
             int y = (int) cell.Location.y;
 
             char xPos = (char) ('A' + x);
             string yPos = (8 - y).ToString();
             Debug.Log(xPos + yPos);
+            history.Add(xPos + yPos);
+            TurnEnd();
 
         }
     }
@@ -265,6 +270,7 @@ public class OthelloBoard : MonoBehaviour
 
                 Debug.Log("黒:" + black + " 白:" + white);
 
+                File.WriteAllLines(Application.dataPath + "/kifu.txt", history);
                 return;
             }
 
