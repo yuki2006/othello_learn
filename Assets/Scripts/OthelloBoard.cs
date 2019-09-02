@@ -199,16 +199,13 @@ public class OthelloBoard : MonoBehaviour
         if (isReverse)
         {
             TurnEnd();
-            string[] cs = new string[]
-            {
-                "A", "B", "C", "D", "E", "F", "G", "H"
-            };
             int x = (int) cell.Location.x;
             int y = (int) cell.Location.y;
 
-            string xPos = cs[x];
+            char xPos = (char) ('A' + x);
             string yPos = (8 - y).ToString();
             Debug.Log(xPos + yPos);
+
         }
     }
 
