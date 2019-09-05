@@ -298,13 +298,19 @@ public class OthelloBoard : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            string cell = loadHistory[loadPointer]; // "C4" とかの文字列
-            loadPointer++; // 1手見たので増やす
-            // string の
-            // cell[0] → 'C' などのcharの文字になる
-            int x = cell[0] - 'A';
-            int y = 8 - (cell[1] - '0');
-            PutCell(OthelloCells[x, y]);
+            if (loadHistory != null)
+            {
+                if (loadPointer < loadHistory.Length)
+                {
+                    string cell = loadHistory[loadPointer]; // "C4" とかの文字列
+                    loadPointer++; // 1手見たので増やす
+                    // string の
+                    // cell[0] → 'C' などのcharの文字になる
+                    int x = cell[0] - 'A';
+                    int y = 8 - (cell[1] - '0');
+                    PutCell(OthelloCells[x, y]);
+                }
+            }
         }
     }
 }
