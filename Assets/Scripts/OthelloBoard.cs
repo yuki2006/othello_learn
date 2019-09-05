@@ -28,6 +28,10 @@ public class OthelloBoard : MonoBehaviour
     // 棋譜を保存する変数を用意する。
     List<string> history = new List<string>();
 
+    // ファイルから読み込んだ棋譜のデータ
+    string[] loadHistory;
+    int loadPointer = 0;
+
     void Start()
     {
         instance = this;
@@ -268,7 +272,6 @@ public class OthelloBoard : MonoBehaviour
 
                 Debug.Log("黒 \r\n:5個");
                 string data = string.Join("\r\n", history);
-                data = "棋譜" + "\r\n" + data;
                 File.WriteAllText(Application.dataPath + "/kifu.txt", data);
                 return;
             }
@@ -281,6 +284,27 @@ public class OthelloBoard : MonoBehaviour
         {
             // ガイドがあるのでパスではない。
             prevPass = false;
+        }
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.F1))
+        {
+            // F1を押すと棋譜読み込みモードする
+            // 棋譜データをファイルから開く
+            loadHistory = File.ReadAllLines(Application.dataPath + "/kifu.txt");
+            Debug.Log("ファイルを読み込みました");
+        }
+        else if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            string cell = loadHistory[loadPointer]; // "C4" とかの文字列
+            loadPointer++; // 1手見たので増やす
+            // string の
+            // cell[0] → 'C' などのcharの文字になる
+            int x = cell[0] - 'A';
+            int y = 8 - (cell[1] - '0');
+            PutCell(OthelloCells[x, y]);
         }
     }
 }
