@@ -207,10 +207,8 @@ public class OthelloBoard : MonoBehaviour
 
             char xPos = (char) ('A' + x);
             string yPos = (8 - y).ToString();
-            Debug.Log(xPos + yPos);
             history.Add(xPos + yPos);
             TurnEnd();
-
         }
     }
 
@@ -268,9 +266,10 @@ public class OthelloBoard : MonoBehaviour
                     }
                 }
 
-                Debug.Log("黒:" + black + " 白:" + white);
-
-                File.WriteAllLines(Application.dataPath + "/kifu.txt", history);
+                Debug.Log("黒 \r\n:5個");
+                string data = string.Join("\r\n", history);
+                data = "棋譜" + "\r\n" + data;
+                File.WriteAllText(Application.dataPath + "/kifu.txt", data);
                 return;
             }
 
