@@ -236,6 +236,12 @@ public class OthelloBoard : MonoBehaviour
             // コンピューターに打って欲しいタイミング
             // 有効なマスを取得する
             List<OthelloCell> cells = GetEnableCells();
+            if (cells.Count == 0)
+            {
+                // ゲーム終了
+                return;
+            }
+
             // ランダムで打つ
             int index = UnityEngine.Random.Range(0, cells.Count - 1);
             PutCell(cells[index], false);
