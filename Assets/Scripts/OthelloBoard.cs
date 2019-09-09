@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 public class OthelloBoard : MonoBehaviour
 {
@@ -232,7 +233,12 @@ public class OthelloBoard : MonoBehaviour
         CheckCellEnable();
         if (CurrentTurn == 0)
         {
-            // コンピューターに打って欲しい
+            // コンピューターに打って欲しいタイミング
+            // 有効なマスを取得する
+            List<OthelloCell> cells = GetEnableCells();
+            // ランダムで打つ
+            int index = UnityEngine.Random.Range(0, cells.Count - 1);
+            PutCell(cells[index], false);
         }
     }
 
@@ -260,7 +266,7 @@ public class OthelloBoard : MonoBehaviour
     {
         // 次おく色を表示する
         nextCell.OwnerID = CurrentTurn;
-        
+
         // いったんすべてのセルを無効にしておく
         for (int i = 0; i < BoardSize; i++)
         {
