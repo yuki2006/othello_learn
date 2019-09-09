@@ -230,6 +230,29 @@ public class OthelloBoard : MonoBehaviour
     {
         CurrentTurn = (CurrentTurn + 1) % 2;
         CheckCellEnable();
+        if (CurrentTurn == 0)
+        {
+            // コンピューターに打って欲しい
+        }
+    }
+
+    // 置けるところをリストとして返す関数
+    List<OthelloCell> GetEnableCells()
+    {
+        List<OthelloCell> ret = new List<OthelloCell>();
+        for (int i = 0; i < BoardSize; i++)
+        {
+            for (int j = 0; j < BoardSize; j++)
+            {
+                bool result = CheckAndReverse(OthelloCells[i, j], false);
+                if (result)
+                {
+                    ret.Add(OthelloCells[i, j]);
+                }
+            }
+        }
+
+        return ret;
     }
 
     // 各セルの有効・無効を判定して切り替える処理
@@ -240,23 +263,29 @@ public class OthelloBoard : MonoBehaviour
 
         // おけるかどうかのフラグ
         bool canPut = false;
-        // ガイドを計算して表示する
+
+        // いったんすべてのセルを無効にしておく
         for (int i = 0; i < BoardSize; i++)
         {
             for (int j = 0; j < BoardSize; j++)
             {
-                bool result = CheckAndReverse(OthelloCells[i, j], false);
-                // resultがtrueならそこにおける、 falseなら置けない。
-                OthelloCells[i, j].GetComponent<Button>().interactable = result;
-                if (result)
-                {
-                    canPut = true;
-                }
+                OthelloCells[i, j].GetComponent<Button>().interactable = false;
             }
         }
 
-        // 1回もresult が trueにならなかったらパス
-        if (!canPut)
+        // ガイドを計算して表示する
+        List<OthelloCell> cellList = GetEnableCells();
+        // そのターンで置けるものの一覧を取得しているので
+        // このループは置けるものだけ入っている
+        foreach (OthelloCell cell in cellList)
+        {
+            int i = (int) cell.Location.x;
+            int j = (int) cell.Location.y;
+            OthelloCells[i, j].GetComponent<Button>().interactable = true;
+        }
+
+        // パスの条件
+        if (cellList.Count == 0)
         {
             if (prevPass)
             {
