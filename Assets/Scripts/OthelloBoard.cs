@@ -199,8 +199,18 @@ public class OthelloBoard : MonoBehaviour
         return isReverse;
     }
 
-    public void PutCell(OthelloCell cell)
+    public void PutCell(OthelloCell cell, bool isHuman = true)
     {
+        if (isHuman)
+        {
+            // 人間が打った時
+            if (CurrentTurn == 0)
+            {
+                // 0 (白)のときは無効にする
+                return;
+            }
+        }
+
         // どれかが反転されたかどうか オーバーロード（多重定義で実現している）
         bool isReverse = CheckAndReverse(cell, true);
 
@@ -270,7 +280,7 @@ public class OthelloBoard : MonoBehaviour
                     }
                 }
 
-                Debug.Log("黒 \r\n:5個");
+                Debug.Log($"黒{black}個");
                 string data = string.Join("\r\n", history);
                 File.WriteAllText(Application.dataPath + "/kifu.txt", data);
                 return;
@@ -308,7 +318,7 @@ public class OthelloBoard : MonoBehaviour
                     // cell[0] → 'C' などのcharの文字になる
                     int x = cell[0] - 'A';
                     int y = 8 - (cell[1] - '0');
-                    PutCell(OthelloCells[x, y]);
+                    PutCell(OthelloCells[x, y], false);
                 }
             }
         }
