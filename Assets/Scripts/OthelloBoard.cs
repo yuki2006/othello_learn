@@ -318,7 +318,7 @@ public class OthelloBoard : MonoBehaviour
                     }
                 }
 
-                Debug.Log($"黒{black}個");
+                Debug.Log($"黒{black}個 白{white}個");
                 string data = string.Join("\r\n", history);
                 File.WriteAllText(Application.dataPath + "/kifu.txt", data);
                 return;
