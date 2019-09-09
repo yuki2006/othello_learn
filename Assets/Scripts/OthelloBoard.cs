@@ -260,10 +260,7 @@ public class OthelloBoard : MonoBehaviour
     {
         // 次おく色を表示する
         nextCell.OwnerID = CurrentTurn;
-
-        // おけるかどうかのフラグ
-        bool canPut = false;
-
+        
         // いったんすべてのセルを無効にしておく
         for (int i = 0; i < BoardSize; i++)
         {
@@ -284,7 +281,7 @@ public class OthelloBoard : MonoBehaviour
             OthelloCells[i, j].GetComponent<Button>().interactable = true;
         }
 
-        // パスの条件
+        // パスの条件は置けるセルの数が0個の時
         if (cellList.Count == 0)
         {
             if (prevPass)
