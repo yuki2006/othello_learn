@@ -18,11 +18,12 @@ public class OthelloCell : MonoBehaviour
         set
         {
             ownerID = value;
-            ChipImage.color = OthelloBoard.Instance.PlayerChipColors[ownerID + 1];
-            if (ownerID == -1)
-                this.GetComponent<Button>().interactable = true;
-            else
-                this.GetComponent<Button>().interactable = false;
+            // 思考用のフィールドのためattachされないオブジェクトを考える必要があるため
+            // 初期化されているかどうかを判定する
+            if (ChipImage != null)
+            {
+                ChipImage.color = OthelloBoard.Instance.PlayerChipColors[ownerID + 1];
+            }
         }
     }
 

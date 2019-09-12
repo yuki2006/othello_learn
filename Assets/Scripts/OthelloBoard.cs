@@ -255,7 +255,7 @@ public class OthelloBoard : MonoBehaviour
             }
 
             // int.MinValueはintで表す最小の値という意味で必ず一番小さい
-            
+
             int max = int.MinValue; // ループの中で評価値自体の最大値を保持する
             int maxIndex = 0; // 最大値を更新した時に、それが何番目だったかを保持する。
             // 有効なものから1つ選んで評価値と照らし合わせる
@@ -269,7 +269,20 @@ public class OthelloBoard : MonoBehaviour
                     maxIndex = i;
                 }
             }
-            
+
+            // 思考のために今の盤面からコピーしたテーブルを作る
+            // コンピュータから見て人間の指すのを考えるまでする
+            OthelloCell[,] currentField = new OthelloCell[BoardSize, BoardSize];
+            for (int i = 0; i < BoardSize; i++)
+            {
+                for (int j = 0; j < BoardSize; j++)
+                {
+                    currentField[i, j] = new OthelloCell();
+                    currentField[i, j].Location = OthelloCells[i, j].Location;
+                    currentField[i, j].OwnerID = OthelloCells[i, j].OwnerID;
+                }
+            }
+
             PutCell(cells[maxIndex], false);
         }
     }
