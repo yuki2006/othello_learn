@@ -33,6 +33,18 @@ public class OthelloBoard : MonoBehaviour
     string[] loadHistory;
     int loadPointer = 0;
 
+    private int[,] points =
+    {
+        {100, -50, 0, 0, 0, 0, -50, 100},
+        {-50, -50, 0, 0, 0, 0, -50, -50},
+        {0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0},
+        {-50, -50, 0, 0, 0, 0, -50, -50},
+        {100, -50, 0, 0, 0, 0, -50, 100},
+    };
+
     void Start()
     {
         instance = this;
@@ -242,9 +254,23 @@ public class OthelloBoard : MonoBehaviour
                 return;
             }
 
-            // ランダムで打つ
-            int index = UnityEngine.Random.Range(0, cells.Count - 1);
-            PutCell(cells[index], false);
+            // int.MinValueはintで表す最小の値という意味で必ず一番小さい
+            
+            int max = int.MinValue; // ループの中で評価値自体の最大値を保持する
+            int maxIndex = 0; // 最大値を更新した時に、それが何番目だったかを保持する。
+            // 有効なものから1つ選んで評価値と照らし合わせる
+            for (int i = 0; i < cells.Count; i++)
+            {
+                int y = (int) cells[i].Location.y;
+                int x = (int) cells[i].Location.x;
+                if (max < points[y, x])
+                {
+                    max = points[y, x];
+                    maxIndex = i;
+                }
+            }
+            
+            PutCell(cells[maxIndex], false);
         }
     }
 
