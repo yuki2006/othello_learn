@@ -245,57 +245,75 @@ public class OthelloBoard : MonoBehaviour
         CheckCellEnable();
         if (CurrentTurn == 0)
         {
-            // ゲーム木　で　AIが1手目をどこまで打ったかを管理する
-            int aiSelect = 0;
-            int aiTurn = CurrentTurn;
-
             // 思考のために今の盤面からコピーしたテーブルを作る
             // コンピュータから見て人間の指すのを考えるまでする
-            OthelloCell[,] currentField = new OthelloCell[BoardSize, BoardSize];
+            OthelloCell[,] aiField = new OthelloCell[BoardSize, BoardSize];
             for (int i = 0; i < BoardSize; i++)
             {
                 for (int j = 0; j < BoardSize; j++)
                 {
-                    currentField[i, j] = new OthelloCell();
-                    currentField[i, j].Location = OthelloCells[i, j].Location;
-                    currentField[i, j].OwnerID = OthelloCells[i, j].OwnerID;
+                    aiField[i, j] = new OthelloCell();
+                    aiField[i, j].Location = OthelloCells[i, j].Location;
+//                    currentField[i, j].OwnerID = OthelloCells[i, j].OwnerID;
                 }
             }
 
             // コンピューターに打って欲しいタイミング
             // 有効なマスを取得する
-            List<OthelloCell> cells = GetEnableCells(currentField, aiTurn);
+            List<OthelloCell> cells = GetEnableCells(aiField, CurrentTurn);
             if (cells.Count == 0)
             {
                 // ゲーム終了
                 return;
             }
 
-            // AIが1手目を打つ この1手目は打てる手をすべて、一旦評価値を考えずに打つ 
-            CheckAndReverse(currentField, cells[aiSelect], aiTurn, true);
-
-            // AIから見た相手（人間）が打てる可能性を取得する
-            List<OthelloCell> canCells = GetEnableCells(currentField, aiTurn);
-            if (canCells.Count == 0)
+            // ************* AI が打つ ****************
+            // ゲーム木　で　AIが1手目をどこまで打ったかを管理する
+            for (int aiSelect = 0; aiSelect < cells.Count; aiSelect++)
             {
-                // ゲーム終了
-                return;
-            }
-
-
-            // int.MinValueはintで表す最小の値という意味で必ず一番小さい
-
-            int max = int.MinValue; // ループの中で評価値自体の最大値を保持する
-            int maxIndex = 0; // 最大値を更新した時に、それが何番目だったかを保持する。
-            // 有効なものから1つ選んで評価値と照らし合わせる
-            for (int i = 0; i < canCells.Count; i++)
-            {
-                int y = (int) canCells[i].Location.y;
-                int x = (int) canCells[i].Location.x;
-                if (max < points[y, x])
+                // 状態の復元をする
+                int aiTurn = CurrentTurn;
+                for (int i = 0; i < BoardSize; i++)
                 {
-                    max = points[y, x];
-                    maxIndex = i;
+                    for (int j = 0; j < BoardSize; j++)
+                    {
+                        aiField[i, j].OwnerID = OthelloCells[i, j].OwnerID;
+                    }
+                }                
+
+                // AIが1手目を打つ この1手目は打てる手をすべて、一旦評価値を考えずに打つ 
+                bool result = CheckAndReverse(aiField, cells[aiSelect], aiTurn, true);
+                if (result)
+                {
+                    // 仮想的に打ったときにAIのターンを変える
+                    aiTurn = (aiTurn + 1) % 2;
+                }
+
+                // ************* 人間が打つ ****************
+
+                // AIから見た相手（人間）が打てる可能性を取得する
+                List<OthelloCell> canCells = GetEnableCells(aiField, aiTurn);
+                if (canCells.Count == 0)
+                {
+                    // ゲーム終了
+                    return;
+                }
+
+
+                // int.MinValueはintで表す最小の値という意味で必ず一番小さい
+
+                int max = int.MinValue; // ループの中で評価値自体の最大値を保持する
+                int maxIndex = 0; // 最大値を更新した時に、それが何番目だったかを保持する。
+                // 有効なものから1つ選んで評価値と照らし合わせる
+                for (int i = 0; i < canCells.Count; i++)
+                {
+                    int y = (int) canCells[i].Location.y;
+                    int x = (int) canCells[i].Location.x;
+                    if (max < points[y, x])
+                    {
+                        max = points[y, x];
+                        maxIndex = i;
+                    }
                 }
             }
 
