@@ -120,7 +120,7 @@ public class OthelloBoard : MonoBehaviour
 
 
 // ひっくり返せたら trueを返す ひっくり返せなかったらfalseを返す
-    bool CheckAndReverse(OthelloCell[,] field, OthelloCell cell, int dx, int dy, bool doReverse)
+    bool CheckAndReverse(OthelloCell[,] field, OthelloCell cell, int dx, int dy, int turn, bool doReverse)
     {
         // 一つ右横がOwnerIDが違うかどうか x,yは確認したいセル
         // 添字はint 型しか使えないので キャスト というもので変換している。
@@ -150,12 +150,12 @@ public class OthelloBoard : MonoBehaviour
                 // 何も置かれていないので終了
                 return false;
             }
-            else if (field[x, y].OwnerID != CurrentTurn)
+            else if (field[x, y].OwnerID != turn)
             {
                 // 相手の駒が置いてある時 「相手の駒を見た」というフラグをたてる
                 isChecked = true;
             }
-            else if (field[x, y].OwnerID == CurrentTurn)
+            else if (field[x, y].OwnerID == turn)
             {
                 // 自分の色の場合
                 // すでに相手を見ていた場合
@@ -169,7 +169,7 @@ public class OthelloBoard : MonoBehaviour
                         while (sx != x || sy != y)
                         {
                             // [x,y]じゃないのに注意
-                            field[sx, sy].OwnerID = CurrentTurn;
+                            field[sx, sy].OwnerID = turn;
                             sx += dx;
                             sy += dy;
                         }
@@ -187,7 +187,7 @@ public class OthelloBoard : MonoBehaviour
         }
     }
 
-    bool CheckAndReverse(OthelloCell[,] field, OthelloCell cell, bool doReverse)
+    bool CheckAndReverse(OthelloCell[,] field, OthelloCell cell, int turn, bool doReverse)
     {
         bool isReverse = false;
         if (cell.OwnerID != -1)
@@ -205,7 +205,7 @@ public class OthelloBoard : MonoBehaviour
                     continue;
                 }
 
-                isReverse |= CheckAndReverse(field, cell, i, j, doReverse);
+                isReverse |= CheckAndReverse(field, cell, i, j, turn, doReverse);
             }
         }
 
@@ -225,7 +225,7 @@ public class OthelloBoard : MonoBehaviour
         }
 
         // どれかが反転されたかどうか オーバーロード（多重定義で実現している）
-        bool isReverse = CheckAndReverse(OthelloCells, cell, true);
+        bool isReverse = CheckAndReverse(OthelloCells, cell, CurrentTurn, true);
 
         if (isReverse)
         {
@@ -245,6 +245,10 @@ public class OthelloBoard : MonoBehaviour
         CheckCellEnable();
         if (CurrentTurn == 0)
         {
+            // ゲーム木　で　AIが1手目をどこまで打ったかを管理する
+            int aiSelect = 0;
+            int aiTurn = CurrentTurn;
+
             // 思考のために今の盤面からコピーしたテーブルを作る
             // コンピュータから見て人間の指すのを考えるまでする
             OthelloCell[,] currentField = new OthelloCell[BoardSize, BoardSize];
@@ -260,22 +264,34 @@ public class OthelloBoard : MonoBehaviour
 
             // コンピューターに打って欲しいタイミング
             // 有効なマスを取得する
-            List<OthelloCell> cells = GetEnableCells(currentField);
+            List<OthelloCell> cells = GetEnableCells(currentField, aiTurn);
             if (cells.Count == 0)
             {
                 // ゲーム終了
                 return;
             }
 
+            // AIが1手目を打つ この1手目は打てる手をすべて、一旦評価値を考えずに打つ 
+            CheckAndReverse(currentField, cells[aiSelect], aiTurn, true);
+
+            // AIから見た相手（人間）が打てる可能性を取得する
+            List<OthelloCell> canCells = GetEnableCells(currentField, aiTurn);
+            if (canCells.Count == 0)
+            {
+                // ゲーム終了
+                return;
+            }
+
+
             // int.MinValueはintで表す最小の値という意味で必ず一番小さい
 
             int max = int.MinValue; // ループの中で評価値自体の最大値を保持する
             int maxIndex = 0; // 最大値を更新した時に、それが何番目だったかを保持する。
             // 有効なものから1つ選んで評価値と照らし合わせる
-            for (int i = 0; i < cells.Count; i++)
+            for (int i = 0; i < canCells.Count; i++)
             {
-                int y = (int) cells[i].Location.y;
-                int x = (int) cells[i].Location.x;
+                int y = (int) canCells[i].Location.y;
+                int x = (int) canCells[i].Location.x;
                 if (max < points[y, x])
                 {
                     max = points[y, x];
@@ -289,14 +305,14 @@ public class OthelloBoard : MonoBehaviour
     }
 
     // 置けるところをリストとして返す関数
-    List<OthelloCell> GetEnableCells(OthelloCell[,] field)
+    List<OthelloCell> GetEnableCells(OthelloCell[,] field, int turn)
     {
         List<OthelloCell> ret = new List<OthelloCell>();
         for (int i = 0; i < BoardSize; i++)
         {
             for (int j = 0; j < BoardSize; j++)
             {
-                bool result = CheckAndReverse(field, OthelloCells[i, j], false);
+                bool result = CheckAndReverse(field, OthelloCells[i, j], turn, false);
                 if (result)
                 {
                     ret.Add(OthelloCells[i, j]);
@@ -323,7 +339,7 @@ public class OthelloBoard : MonoBehaviour
         }
 
         // ガイドを計算して表示する
-        List<OthelloCell> cellList = GetEnableCells(OthelloCells);
+        List<OthelloCell> cellList = GetEnableCells(OthelloCells, CurrentTurn);
         // そのターンで置けるものの一覧を取得しているので
         // このループは置けるものだけ入っている
         foreach (OthelloCell cell in cellList)
