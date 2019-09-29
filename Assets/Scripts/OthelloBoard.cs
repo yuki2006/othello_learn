@@ -254,7 +254,7 @@ public class OthelloBoard : MonoBehaviour
                 {
                     aiField[i, j] = new OthelloCell();
                     aiField[i, j].Location = OthelloCells[i, j].Location;
-//                    currentField[i, j].OwnerID = OthelloCells[i, j].OwnerID;
+                    aiField[i, j].OwnerID = OthelloCells[i, j].OwnerID;
                 }
             }
 
@@ -266,6 +266,9 @@ public class OthelloBoard : MonoBehaviour
                 // ゲーム終了
                 return;
             }
+
+            int max = Int32.MinValue;
+            int aiIndex = 0;
 
             // ************* AI が打つ ****************
             // ゲーム木　で　AIが1手目をどこまで打ったかを管理する
@@ -279,10 +282,12 @@ public class OthelloBoard : MonoBehaviour
                     {
                         aiField[i, j].OwnerID = OthelloCells[i, j].OwnerID;
                     }
-                }                
+                }
 
                 // AIが1手目を打つ この1手目は打てる手をすべて、一旦評価値を考えずに打つ 
                 bool result = CheckAndReverse(aiField, cells[aiSelect], aiTurn, true);
+                int basePoint = points[(int) cells[aiSelect].Location.y,
+                    (int) cells[aiSelect].Location.x];
                 if (result)
                 {
                     // 仮想的に打ったときにAIのターンを変える
@@ -293,32 +298,34 @@ public class OthelloBoard : MonoBehaviour
 
                 // AIから見た相手（人間）が打てる可能性を取得する
                 List<OthelloCell> canCells = GetEnableCells(aiField, aiTurn);
-                if (canCells.Count == 0)
+                if (canCells.Count > 0)
                 {
-                    // ゲーム終了
-                    return;
-                }
+                    // int.MinValueはintで表す最小の値という意味で必ず一番小さい
 
-
-                // int.MinValueはintで表す最小の値という意味で必ず一番小さい
-
-                int max = int.MinValue; // ループの中で評価値自体の最大値を保持する
-                int maxIndex = 0; // 最大値を更新した時に、それが何番目だったかを保持する。
-                // 有効なものから1つ選んで評価値と照らし合わせる
-                for (int i = 0; i < canCells.Count; i++)
-                {
-                    int y = (int) canCells[i].Location.y;
-                    int x = (int) canCells[i].Location.x;
-                    if (max < points[y, x])
+                    int nextMax = int.MinValue; // ループの中で評価値自体の最大値を保持する
+                    int maxIndex = 0; // 最大値を更新した時に、それが何番目だったかを保持する。
+                    // 有効なものから1つ選んで評価値と照らし合わせる
+                    for (int i = 0; i < canCells.Count; i++)
                     {
-                        max = points[y, x];
-                        maxIndex = i;
+                        int y = (int) canCells[i].Location.y;
+                        int x = (int) canCells[i].Location.x;
+                        if (nextMax < points[y, x])
+                        {
+                            nextMax = points[y, x];
+                        }
+                    }
+
+                    int c = basePoint - nextMax;
+                    if (max < c)
+                    {
+                        max = c;
+                        // ここでのスコアがAIからみて最大なのでAIはここを選択する
+                        aiIndex = aiSelect;
                     }
                 }
             }
 
-
-            PutCell(cells[maxIndex], false);
+            PutCell(cells[aiIndex], false);
         }
     }
 
