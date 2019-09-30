@@ -285,14 +285,13 @@ public class OthelloBoard : MonoBehaviour
                 }
 
                 // AIが1手目を打つ この1手目は打てる手をすべて、一旦評価値を考えずに打つ 
-                bool result = CheckAndReverse(aiField, cells[aiSelect], aiTurn, true);
+                CheckAndReverse(aiField, cells[aiSelect], aiTurn, true);
+                // 1手目の評価値
                 int basePoint = points[(int) cells[aiSelect].Location.y,
                     (int) cells[aiSelect].Location.x];
-                if (result)
-                {
-                    // 仮想的に打ったときにAIのターンを変える
-                    aiTurn = (aiTurn + 1) % 2;
-                }
+
+                // 仮想的に打ったときにAIのターンを変える
+                aiTurn = (aiTurn + 1) % 2;
 
                 // ************* 人間が打つ ****************
 
