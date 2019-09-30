@@ -293,7 +293,7 @@ public class OthelloBoard : MonoBehaviour
                 // 仮想的に打ったときにAIのターンを変える
                 aiTurn = (aiTurn + 1) % 2;
 
-                // ************* 人間が打つ ****************
+                // ************* AI上で相手のターン ****************
 
                 // AIから見た相手（人間）が打てる可能性を取得する
                 List<OthelloCell> canCells = GetEnableCells(aiField, aiTurn);
@@ -302,7 +302,7 @@ public class OthelloBoard : MonoBehaviour
                     // int.MinValueはintで表す最小の値という意味で必ず一番小さい
 
                     int nextMax = int.MinValue; // ループの中で評価値自体の最大値を保持する
-                    int maxIndex = 0; // 最大値を更新した時に、それが何番目だったかを保持する。
+                    
                     // 有効なものから1つ選んで評価値と照らし合わせる
                     for (int i = 0; i < canCells.Count; i++)
                     {
