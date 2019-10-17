@@ -45,8 +45,19 @@ public class OthelloBoard : MonoBehaviour
         {100, -50, 0, 0, 0, 0, -50, 100},
     };
 
+    private OthelloCell[,] currentField;
+
     void Start()
     {
+        currentField = new OthelloCell[BoardSize, BoardSize];
+        for (int i = 0; i < BoardSize; i++)
+        {
+            for (int j = 0; j < BoardSize; j++)
+            {
+                currentField[i, j] = new OthelloCell();
+            }
+        }
+
         instance = this;
         OthelloBoardIsSquareSize();
 
@@ -245,90 +256,115 @@ public class OthelloBoard : MonoBehaviour
         CheckCellEnable();
         if (CurrentTurn == 0)
         {
-            // 思考のために今の盤面からコピーしたテーブルを作る
-            // コンピュータから見て人間の指すのを考えるまでする
-            OthelloCell[,] aiField = new OthelloCell[BoardSize, BoardSize];
-            for (int i = 0; i < BoardSize; i++)
+            // 4つ目引数は何手先までを読むか
+            AIResult result = Recursive(OthelloCells, CurrentTurn, false, 7);
+            if (result.cell == null)
             {
-                for (int j = 0; j < BoardSize; j++)
-                {
-                    aiField[i, j] = new OthelloCell();
-                    aiField[i, j].Location = OthelloCells[i, j].Location;
-                    aiField[i, j].OwnerID = OthelloCells[i, j].OwnerID;
-                }
-            }
-
-            // コンピューターに打って欲しいタイミング
-            // 有効なマスを取得する
-            List<OthelloCell> cells = GetEnableCells(aiField, CurrentTurn);
-            if (cells.Count == 0)
-            {
-                // ゲーム終了
+                // null の場合は、CPUの番はパス
                 return;
             }
 
-            int max = Int32.MinValue;
-            int aiIndex = 0;
+            PutCell(result.cell, false);
+        }
+    }
 
-            // ************* AI が打つ ****************
-            // ゲーム木　で　AIが1手目をどこまで打ったかを管理する
-            for (int aiSelect = 0; aiSelect < cells.Count; aiSelect++)
+    // AIの処理用の再帰関数の戻り値のためのクラス
+    class AIResult
+    {
+        public int point; // そのときの点数
+        public OthelloCell cell; // そのときに選んだセル
+    }
+
+    // 引数の組み合わせで、そのときのturnから見たときの点数が戻り値
+    AIResult Recursive(OthelloCell[,] aiField, int turn, bool prevPass, int depth)
+    {
+        List<OthelloCell> cells = GetEnableCells(aiField, turn);
+        if (cells.Count == 0)
+        {
+            // 打てるところがない
+            if (prevPass)
             {
-                // 状態の復元をする
-                int aiTurn = CurrentTurn;
+                // 前回パスしていたら、連続パスなのでゲーム終了 （AIが思考上でゲームが終わったときの判定も含む）
+                // 白と黒の数をカウントする
+                int white = 0;
+                int black = 0;
                 for (int i = 0; i < BoardSize; i++)
                 {
                     for (int j = 0; j < BoardSize; j++)
                     {
-                        aiField[i, j].OwnerID = OthelloCells[i, j].OwnerID;
+                        if (aiField[i, j].OwnerID == 0)
+                        {
+                            white++;
+                        }
+                        else if (aiField[i, j].OwnerID == 1)
+                        {
+                            black++;
+                        }
                     }
                 }
 
-                // AIが1手目を打つ この1手目は打てる手をすべて、一旦評価値を考えずに打つ 
-                CheckAndReverse(aiField, cells[aiSelect], aiTurn, true);
-                // 1手目の評価値
-                int basePoint = points[(int) cells[aiSelect].Location.y,
-                    (int) cells[aiSelect].Location.x];
-
-                // 仮想的に打ったときにAIのターンを変える
-                aiTurn = (aiTurn + 1) % 2;
-
-                // ************* AI上で相手のターン ****************
-
-                // AIから見た相手（人間）が打てる可能性を取得する
-                List<OthelloCell> canCells = GetEnableCells(aiField, aiTurn);
-                if (canCells.Count > 0)
+                if ((turn == 0 && white > black) ||
+                    (turn == 1 && white < black))
                 {
-                    // int.MinValueはintで表す最小の値という意味で必ず一番小さい
+                    return new AIResult {point = 99999}; // 勝ちなのでスコアとしてはでかい数を返す
+                }
 
-                    int nextMax = int.MinValue; // ループの中で評価値自体の最大値を保持する
-                    
-                    // 有効なものから1つ選んで評価値と照らし合わせる
-                    for (int i = 0; i < canCells.Count; i++)
-                    {
-                        int y = (int) canCells[i].Location.y;
-                        int x = (int) canCells[i].Location.x;
-                        if (nextMax < points[y, x])
-                        {
-                            nextMax = points[y, x];
-                        }
-                    }
+                return new AIResult {point = -99999}; // 負けなのでスコアとして小さい数を返す
+            }
+            else
+            {
+                // 前回パスしていなかったら 普通にパスする（ターンを変えて関数を呼ぶ）
+                // 相手のターンでの点数が自分の逆なのでマイナスにする
+                // 一旦AIResult型で受け取ってポイント部分をマイナスにして新しく返す
+                AIResult result = Recursive(aiField, (turn + 1) % 2, true, depth);
+                return new AIResult {point = -result.point};
+            }
+        }
+        else
+        {
+            // 打てるところがあるので打っていく
+            // 一番点数が高いものを選ぶ
+            int maxPoint = int.MinValue;
+            int maxIndex = 0;
 
-                    int c = basePoint - nextMax;
-                    if (max < c)
+
+            for (int index = 0; index < cells.Count; index++)
+            {
+                // 引数で与えられた盤面をコピーする
+                for (int i = 0; i < BoardSize; i++)
+                {
+                    for (int j = 0; j < BoardSize; j++)
                     {
-                        max = c;
-                        // ここでのスコアがAIからみて最大なのでAIはここを選択する
-                        aiIndex = aiSelect;
+                        currentField[i, j].OwnerID = aiField[i, j].OwnerID;
                     }
+                }
+
+                // その選択でひっくり返えす
+                CheckAndReverse(currentField, cells[index], turn, true);
+                // 打った場所の点数
+                int point = points[(int) cells[index].Location.y, (int) cells[index].Location.x];
+                // 1手先、打つ処理に渡す　depthを1引いているのがポイント
+                // Recursiveの呼び出しでは相手の点数によって自分の点数が下がるので 引く
+                // 例えば、今、黒なら　ターンが変わって白が打つ → 戻り値は白が打ったときの点数→ 黒から見ると逆の点数になるので引いている
+                if (depth > 0)
+                {
+                    point -= Recursive(currentField, (turn + 1) % 2, false, depth - 1).point;
+                }
+
+                if (maxPoint < point)
+                {
+                    // 点数の更新をする、その時、何番目を選んだかも保持する
+                    maxPoint = point;
+                    maxIndex = index;
                 }
             }
 
-            PutCell(cells[aiIndex], false);
+            // 計算した点数と、そのときに選ぶセル返すようにする
+            return new AIResult {point = maxPoint, cell = cells[maxIndex]};
         }
     }
 
-    // 置けるところをリストとして返す関数
+// 置けるところをリストとして返す関数
     List<OthelloCell> GetEnableCells(OthelloCell[,] field, int turn)
     {
         List<OthelloCell> ret = new List<OthelloCell>();
@@ -347,14 +383,16 @@ public class OthelloBoard : MonoBehaviour
         return ret;
     }
 
-    // 各セルの有効・無効を判定して切り替える処理
+// 各セルの有効・無効を判定して切り替える処理
     void CheckCellEnable()
     {
-        // 次おく色を表示する
+// 次おく色を表示する
         nextCell.OwnerID = CurrentTurn;
 
-        // いったんすべてのセルを無効にしておく
-        for (int i = 0; i < BoardSize; i++)
+// いったんすべてのセルを無効にしておく
+        for (int i = 0;
+            i < BoardSize;
+            i++)
         {
             for (int j = 0; j < BoardSize; j++)
             {
@@ -362,7 +400,7 @@ public class OthelloBoard : MonoBehaviour
             }
         }
 
-        // ガイドを計算して表示する
+// ガイドを計算して表示する
         List<OthelloCell> cellList = GetEnableCells(OthelloCells, CurrentTurn);
         // そのターンで置けるものの一覧を取得しているので
         // このループは置けるものだけ入っている
@@ -373,7 +411,7 @@ public class OthelloBoard : MonoBehaviour
             OthelloCells[i, j].GetComponent<Button>().interactable = true;
         }
 
-        // パスの条件は置けるセルの数が0個の時
+// パスの条件は置けるセルの数が0個の時
         if (cellList.Count == 0)
         {
             if (prevPass)
@@ -408,6 +446,7 @@ public class OthelloBoard : MonoBehaviour
             prevPass = true;
             TurnEnd();
         }
+
         else
         {
             // ガイドがあるのでパスではない。
